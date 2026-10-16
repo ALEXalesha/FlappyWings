@@ -1400,12 +1400,18 @@ function drawBirdAt(x, y, o) {
 }
 
 // ---------- Счёт и кнопки поверх игры ----------
-function hudText(t, x, y, size, align = 'center', color = P.hud) {
+function hudText(t, x, y, size, align = 'center', color = P.hud, maxW) {
   ctx.font = `bold ${size}px "Segoe UI", Arial, sans-serif`; ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
-  ctx.lineWidth = Math.max(3, size / 9); ctx.lineJoin = 'round'; ctx.strokeStyle = P.hudStroke; ctx.strokeText(t, x, y);
-  ctx.fillStyle = color; ctx.fillText(t, x, y);
+  ctx.lineWidth = Math.max(3, size / 9); ctx.lineJoin = 'round'; ctx.strokeStyle = P.hudStroke;
+  if (maxW) { ctx.strokeText(t, x, y, maxW); ctx.fillStyle = color; ctx.fillText(t, x, y, maxW); }
+  else { ctx.strokeText(t, x, y); ctx.fillStyle = color; ctx.fillText(t, x, y); }
   ctx.textAlign = 'left';
 }
+// Клавиши в подсказках - те, что назначены сейчас (Настройки -> Управление), а не по умолчанию:
+// после переназначения подсказка звала пробел, который уже ничего не делал.
+function keysOf(action) { return kit.bindings[action].filter(Boolean).map((c) => GameKit.keyName(c)); }
+function flapKeysText() { return keysOf('flap').map((k) => (k === 'Пробел' ? 'пробел' : k)).concat('W').join(', '); }
+function pauseKeysText() { const k = keysOf('pause').concat('Esc'); return k.slice(0, -1).join(', ') + ' или ' + k[k.length - 1]; }
 const HUD_BTNS = () => [{ id: 'sound', x: VW - 30, y: 30 }, { id: 'theme', x: VW - 76, y: 30 }];
 const HUD_R = 19;
 function drawHudButton(b) {
@@ -1429,9 +1435,9 @@ function drawHud() {
   if (kit.mode === 'play') for (const b of HUD_BTNS()) drawHudButton(b);
   if (state.phase === 'ready' && kit.mode === 'play') {        // под паузой и окнами подсказка не рисуется
     hudText('Готовы?', VW / 2, 180, 36);
-    hudText('Взмах - пробел, ↑, W,', VW / 2, 352, 15);
+    hudText('Взмах - ' + flapKeysText() + ',', VW / 2, 352, 15, 'center', P.hud, VW - 24);
     hudText('клик или касание', VW / 2, 374, 15);
-    hudText('P или Esc - пауза, R - заново', VW / 2, 400, 13);
+    hudText(pauseKeysText() + ' - пауза, R - заново', VW / 2, 400, 13, 'center', P.hud, VW - 24);
   }
 }
 function hudButtonAt(clientX, clientY) {
@@ -1518,10 +1524,15 @@ kit = GameKit.create({
     { id: 'flaps1000', name: 'Неутомимые крылья', desc: 'Сделать 1000 взмахов за все полёты' },
     { id: 'games25', name: 'Завсегдатай неба', desc: 'Сыграть 25 полётов' },
   ],
-  howto: `<p>Птичка летит сама, а вы машете крыльями: <b>Пробел</b>, <b>↑</b>, <b>W</b>, клик мышью или касание экрана. Каждый взмах подбрасывает вверх, сила тяжести тянет вниз.</p>
+  // «Как играть» собирается при каждом открытии: в нём назначенные сейчас клавиши
+  get howto() {
+    const b = (list) => list.map((k) => `<b>${k}</b>`);
+    const pause = b(keysOf('pause').concat('Esc'));
+    return `<p>Птичка летит сама, а вы машете крыльями: ${b(keysOf('flap').concat('W')).join(', ')}, клик мышью или касание экрана. Каждый взмах подбрасывает вверх, сила тяжести тянет вниз.</p>
     <p>Пролетите между колоннами - очко. Задели колонну или землю - полёт окончен. С каждой колонной просвет чуть уже, а полёт чуть быстрее.</p>
     <p>Медали за один полёт: бронзовое перо - 10 очков, серебряное - 25, золотое - 50, платиновое - 100.</p>
-    <p><b>P</b> или <b>Esc</b> - пауза, <b>R</b> - заново, <b>M</b> - звук, <b>T</b> - светлая или тёмная тема. Кнопки звука и темы есть и в углу игры. Игра встаёт на паузу сама, если окно или вкладку скрыть.</p>`,
+    <p>${pause.slice(0, -1).join(', ')} или ${pause[pause.length - 1]} - пауза, <b>R</b> - заново, <b>M</b> - звук, <b>T</b> - светлая или тёмная тема. Клавиши взмаха и паузы меняются в настройках. Кнопки звука и темы есть и в углу игры. Игра встаёт на паузу сама, если окно или вкладку скрыть.</p>`;
+  },
   credits: `<p><b>Летучая птичка / Flappy Wings</b> - фан-игра в жанре «пролети между колоннами». Не связана с авторами и правообладателями известных игр этого жанра.</p>
     <p>Код, рисунки и музыка сделаны прямо в странице: птичка, колонны и пейзаж рисуются кодом, звуки синтезируются WebAudio. Ни одного файла из интернета, игра работает без сети.</p><p>Часть «Игротеки».</p>`,
   drawLogo(g, w, h, t) {
