@@ -1,0 +1,20 @@
+{
+  "name": "flappywings",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Flappy Wings: fly between columns, three difficulty levels, medals and records, in one HTML page (fan-made)",
+  "author": "ALEXalesha",
+  "license": "MIT",
+  "homepage": "https://alexalesha.github.io/FlappyWings/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ALEXalesha/FlappyWings.git"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "mutate": "node tests/mutate.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1"
+  }
+}
